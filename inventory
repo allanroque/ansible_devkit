@@ -1,0 +1,171 @@
+# Este é um exemplo de inventário Ansible.
+
+[all:vars]
+ansible_password=xxxxxxx
+ansible_user=root
+ansible_port=22
+
+
+#######################
+# Grupo de servidores #
+#######################
+
+[webservers]
+# Definição de host com endereço IP e variáveis específicas do host
+web1.example.com ansible_host=192.168.1.101 ansible_user=admin ansible_ssh_private_key_file=~/.ssh/id_rsa
+web2.example.com ansible_host=192.168.1.102 ansible_user=admin ansible_ssh_private_key_file=~/.ssh/id_rsa
+
+[dbservers]
+# Definição de host com variáveis específicas para configuração do banco de dados
+db1.example.com ansible_host=192.168.1.201 ansible_user=admin ansible_ssh_private_key_file=~/.ssh/id_rsa
+db2.example.com ansible_host=192.168.1.202 ansible_user=admin ansible_ssh_private_key_file=~/.ssh/id_rsa
+
+# Grupo para servidores de banco de dados
+
+# Grupo para servidores de cache
+[cacheservers]
+cache1.example.com ansible_host=192.168.1.301 ansible_user=admin ansible_ssh_private_key_file=~/.ssh/id_rsa
+cache2.example.com ansible_host=192.168.1.302 ansible_user=admin ansible_ssh_private_key_file=~/.ssh/id_rsa
+
+########################
+# Variáveis dos Grupos #
+########################
+
+# Variáveis de grupo global aplicadas a todos os servidores web
+[webservers:vars]
+http_port=80
+max_clients=200
+
+# Variáveis de grupo global aplicadas a todos os servidores de banco de dados
+[dbservers:vars]
+db_name=my_database
+db_user=dbadmin
+db_password=xxxxxxxxx
+ansible_python_interpreter=/usr/bin/python3
+
+# Variáveis de grupo global aplicadas a todos os servidores de cache
+[cacheservers:vars]
+cache_size=2GB
+cache_policy=LRU
+ansible_python_interpreter=/usr/bin/python3
+
+###################
+# Grupo de Grupos #
+###################
+
+# Grupos de ambientes para organizar os servidores em ambientes de produção e desenvolvimento
+[production:children]
+webservers
+dbservers
+cacheservers
+
+[development:children]
+dev_webservers
+dev_dbservers
+
+
+###########################
+# Exemplos mais completos #
+###########################
+
+[linux]
+linux01 ansible_host=99.88.77.66 ansible_user=ec2-user private_ip=172.16.99.66 private_ip2=172.17.44.66
+# Este grupo define um host Linux, utilizando um usuário padrão 'ec2-user'.
+# As variáveis private_ip e private_ip2 são customizadas para o seu ambiente específico.
+
+[siem]
+qradar ansible_host=22.44.55.77 ansible_user=admin private_ip=172.16.3.44 ansible_httpapi_pass="xxxxxxxx" ansible_connection=httpapi ansible_httpapi_use_ssl=yes ansible_httpapi_validate_certs=False ansible_network_os=ibm.qradar.qradar
+# Este host representa um dispositivo SIEM, neste caso, um IBM QRadar.
+# Ele usa conexão HTTPAPI com SSL e especifica o sistema operacional de rede (ibm.qradar.qradar).
+# A senha ansible_httpapi_pass está aqui por motivos de demonstração. **É altamente recomendado** não armazenar senhas diretamente no inventário.
+# Em vez disso, use o Ansible Vault, variáveis de ambiente ou mecanismos de gestão de segredos.
+
+[firewall]
+checkpoint ansible_host=44.55.66.77 ansible_user=admin private_ip=192.168.4.5 ansible_network_os=checkpoint ansible_connection=httpapi ansible_httpapi_use_ssl=yes ansible_httpapi_validate_certs=no
+# Este grupo define um firewall Check Point, usando uma conexão HTTPAPI.
+
+[windows]
+windows-ws ansible_host=55.66.77.88 ansible_user=Administrator ansible_pass=xxxxxxxxx! ansible_port=5986 ansible_connection=winrm ansible_winrm_server_cert_validation=ignore private_ip=192.168.5.6
+# Este host representa uma máquina Windows, conectando-se via WinRM.
+# A senha ansible_pass está aqui para fins de visibilidade e demonstração, mas **não é uma prática recomendada**.
+# Utilize Ansible Vault, gerenciadores de segredos, ou integre com sistemas como HashiCorp Vault para proteger credenciais.
+
+###################
+# Exemplo Network #
+# #################
+
+# Grupo Cisco
+[cisco]
+rtr1 ansible_host=18.222.121.247 private_ip=172.16.129.86
+# O IP público é 18.222.121.247 e o IP privado é 172.16.129.86.
+
+# Variáveis específicas para o grupo Cisco
+[cisco:vars]
+ansible_user=ec2-user
+ansible_network_os=ios
+ansible_connection=network_cli
+# Configurações globais para todos os dispositivos no grupo Cisco:
+# - ansible_user: Usuário padrão para SSH (neste caso, ec2-user).
+# - ansible_network_os: Especifica o sistema operacional de rede (iOS).
+# - ansible_connection: Define o método de conexão como network_cli, ideal para dispositivos de rede.
+
+# Grupo Arista
+[arista]
+rtr2 ansible_host=18.188.194.126 private_ip=172.17.158.197
+rtr4 ansible_host=18.221.5.35 private_ip=172.17.8.111
+# rtr2 e rtr4 são roteadores Arista, gerenciados via Ansible.
+# rtr2 tem IP público 18.188.194.126 e IP privado 172.17.158.197.
+# rtr4 tem IP público 18.221.5.35 e IP privado 172.17.8.111.
+
+# Variáveis específicas para o grupo Arista
+[arista:vars]
+ansible_user=ec2-user
+ansible_network_os=eos
+ansible_connection=network_cli
+ansible_become=true
+ansible_become_method=enable
+# Configurações globais para todos os dispositivos no grupo Arista:
+# - ansible_user: Usuário padrão para SSH.
+# - ansible_network_os: Especifica o sistema operacional de rede (EOS).
+# - ansible_connection: Define o método de conexão como network_cli.
+# - ansible_become: Habilita o uso de escalonamento de privilégios (sudo ou enable).
+# - ansible_become_method: Define o método de escalonamento de privilégios como enable, utilizado em dispositivos de rede.
+
+# Grupo Juniper
+[juniper]
+rtr3 ansible_host=3.14.132.20 private_ip=172.16.73.175
+# rtr3 é um roteador Juniper, gerenciado via Ansible.
+# O IP público é 3.14.132.20 e o IP privado é 172.16.73.175.
+
+# Variáveis específicas para o grupo Juniper
+[juniper:vars]
+ansible_user=ec2-user
+ansible_network_os=junos
+ansible_connection=netconf
+# Configurações globais para todos os dispositivos no grupo Juniper:
+# - ansible_user: Usuário padrão para SSH.
+# - ansible_network_os: Especifica o sistema operacional de rede (Junos).
+# - ansible_connection: Define o método de conexão como netconf, ideal para dispositivos Juniper.
+
+##############################
+# Agrupamento e Localizações #
+##############################
+
+# Grupo Routers: agrupa todos os dispositivos de rede
+[routers:children]
+cisco
+juniper
+arista
+# O grupo routers inclui todos os dispositivos de rede dos grupos Cisco, Juniper e Arista.
+
+# Grupo DC1: define os dispositivos localizados no Data Center 1
+[dc1]
+rtr1
+rtr3
+# DC1 inclui o rtr1 (Cisco) e rtr3 (Juniper), localizados no primeiro data center.
+
+# Grupo DC2: define os dispositivos localizados no Data Center 2
+[dc2]
+rtr2
+rtr4
+# DC2 inclui o rtr2 e rtr4 (ambos Arista), localizados no segundo data center.
